@@ -1,28 +1,21 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-#
-# def print_hi(name):
-#     # Use a breakpoint in the code line below to debug your script.
-#     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-#
-#
-# # Press the green button in the gutter to run the script.
-# if __name__ == '__main__':
-#     print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
-
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import librosa.display
-from numba.pycc import export
 
 # 이미지 폴더 경로 설정
 image_folder_path = "image224/a"  # 스펙트로그램 이미지가 있는 폴더 경로 지정
+
+# 사각형의 크기 (고정값)
+rect_width = 174
+rect_height = 15
+
+# 사각형이 들어가는 범위 설정
+rect_x_start = 28
+rect_x_end = 29  # 스펙트로그램 이미지의 가로 크기에 따라 설정 (0 ~ width-rect_width 사이의 값)
+rect_y_start = 28.2
+rect_y_end = 184  # 스펙트로그램 이미지의 세로 크기에 따라 설정 (0 ~ height-rect_height 사이의 값)
+
+print(rect_width, rect_height)
 
 # 폴더 내의 모든 이미지 파일 로드
 for file_name in os.listdir(image_folder_path):
@@ -32,22 +25,31 @@ for file_name in os.listdir(image_folder_path):
 
         # 스펙트로그램 이미지에 랜덤 마스킹 적용
         masked_spec_image = np.copy(spec_image)
-        mask = np.random.rand(*spec_image.shape) < 0.5  # 50%의 확률로 픽셀을 마스킹
-        masked_spec_image[mask] = 0  # 마스킹된 픽셀을 0으로 설정
+        height, width, _ = masked_spec_image.shape
+        num_rectangles = 1  # 가리개 사각형 개수
+        for i in range(num_rectangles):
+            x = np.random.randint(rect_x_start, rect_x_end)
+            y = np.random.randint(rect_y_start, rect_y_end)
+            masked_spec_image[y:y + rect_height, x:x + rect_width, :] = 0  # 마스킹된 영역을 검정색(0)으로 설정
+
+            # 마스킹된 이미지 로컬에 저장
+            masked_image_file_name = "masked_" + file_name  # 저장할 이미지 파일명 지정
+            masked_image_file_path = os.path.join(image_folder_path, masked_image_file_name)  # 저장할 이미지 파일 경로 지정
+            plt.imsave(masked_image_file_path, masked_spec_image)
+            print(f"Masked image saved: {masked_image_file_path}")
 
         # 마스킹된 이미지 로컬에 적용
         # 이미지 처리 코드 추가
         # 예시로 matplotlib를 사용하여 이미지를 로컬에 저장하는 코드를 추가합니다.
-        masked_image_file_path = os.path.join(image_folder_path, "masked_" + file_name)  # 저장할 이미지 파일 경로 지정
-        plt.imsave(masked_image_file_path, masked_spec_image)
-
+        # masked_image_file_path = os.path.join(image_folder_path, "masked_" + file_name)  # 저장할 이미지 파일 경로 지정
+        # plt.imsave(masked_image_file_path, masked_spec_image)
+        
         # 이미지 처리 작업 예시: 마스킹된 이미지를 화면에 출력
-        plt.figure(figsize=(10, 5))
-        plt.subplot(1, 2, 1)
-        plt.imshow(spec_image)
-        plt.title("Original Spectrogram")
-        plt.subplot(1, 2, 2)
-        plt.imshow(masked_spec_image)
-        plt.title("Masked Spectrogram")
-        plt.show()
-        #file_handle = export(masked_spec_image, format='jpg')
+        # plt.figure(figsize=(10, 5))
+        # plt.subplot(1, 2, 1)
+        # plt.imshow(spec_image)
+        # plt.title("Original Spectrogram")
+        # plt.subplot(1, 2, 2)
+        # plt.imshow(masked_spec_image)
+        # plt.title("Masked Spectrogram")
+        # plt.show()
